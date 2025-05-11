@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt")
 const jwt= require("jsonwebtoken")
 const hisaabModel = require("../models/hisaabModel")
 const { isLoggedIn } = require("../middlewares/auth_middlewares")
+const generatetoken=require('../utils/token')
 
 module.exports.landingPageController=function(req,res){
     res.render("index",{loggedIn : false})
@@ -15,7 +16,7 @@ module.exports.registerController = async function(req,res){
      
 try{
     let user = await userModel.findOne({email})
-if(user) return res.send("you have already an account")
+     if(user) return res.send("you have already an account,please login")
     let salt = await bcrypt.genSalt(10)
      let hash = await bcrypt.hash(password,salt)
     user= await userModel.create({
@@ -24,16 +25,20 @@ if(user) return res.send("you have already an account")
         email,
         password:hash
     })
-    let token = jwt.sign({id:user._id,email:user.email},process.env.JWT_SECRET_KEY)
-    res.cookie("token",token)
-    res.send("account created")
-    
    
- 
+  const token = generatetoken({id:user._id,email:user.email});
+   res.cookie("token", token,{
+    httpOnly: true,
+    secure:true,
+    maxAge:30*24*60*60*1000,
+   });
+
+
 }    
-catch(err){
-    res.send(err.message)
-}
+ catch (err) {
+        console.error(err);
+        res.status(500).send("Something went wrong. Please try again.");
+    }
 }
 module.exports.loginController = async function(req,res){
       let{email,password}=req.body
@@ -42,8 +47,13 @@ module.exports.loginController = async function(req,res){
 
       let result = await bcrypt.compare(password,user.password)
      if(result){
-        let token = jwt.sign({id:user._id,email:user.email},process.env.JWT_SECRET_KEY)
-        res.cookie("token",token)
+       const token = generatetoken({id:user._id,email:user.email});
+     res.cookie("token", token,{
+    httpOnly: true,
+    secure:true,
+    maxAge:30*24*60*60*1000,
+   });
+
         res.redirect("/profile")
      }
      else{

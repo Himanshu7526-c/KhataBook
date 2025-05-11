@@ -8,7 +8,8 @@ require("dotenv").config()
 
 const indexRouter = require('./routes/indexRouter')
 const hisaabRouter=require("./routes/hisaabRouter.js")
-const db = require("./config/mongoose-connection")
+const dbConnect = require("./config/mongoose-connection")
+dbConnect();// 
 
 app.set('view engine', 'ejs');
 app.use(express.json());
