@@ -2,6 +2,9 @@ const jwt = require("jsonwebtoken");
 const userModel = require("../models/userModel");
 
 module.exports.isLoggedIn = async function (req, res, next) {
+ 
+   
+ 
   if (req.cookies.token) {
     try {
       let decoded = await jwt.verify(req.cookies.token, process.env.JWT_SECRET_KEY);  // Corrected `Jwt` to `jwt`

@@ -1,5 +1,10 @@
 const express = require("express")
 const router =express.Router();
+const flash = require("connect-flash");
+const session = require("express-session");
+
+router.use(flash());
+
 const {
     isLoggedIn,
     redirectIfLoggedIn,
