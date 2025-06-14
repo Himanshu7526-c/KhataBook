@@ -6,65 +6,64 @@ const { isLoggedIn } = require("../middlewares/auth_middlewares")
 const generatetoken=require('../utils/token')
 
 module.exports.landingPageController=function(req,res){
-    res.render("index",{loggedIn : false})
+    res.render("index",{isloggedIn : false})
 }
 module.exports.registerPageController=function(req,res){
-    res.render("register")
+    res.render("register",{isloggedIn : false})
 }
-module.exports.registerController = async function (req, res) {
-  let { username, name, email, password } = req.body;
 
-  // 1. Validate required fields
+
+const generateToken = require('../utils/token');
+
+module.exports.registerController = async function (req, res) {
+  const { username, name, email, password } = req.body;
+
+  // Simple field validation
   if (!username || !email || !password) {
     req.flash("error", "All fields are required");
     return res.redirect('/register');
   }
 
   try {
-    // 2. Check if user already exists by email
-    let user = await userModel.findOne({ email });
-    if (user) {
+    // Check if email or username already exists
+    const existingUser = await userModel.findOne({ email });
+    if (existingUser) {
       req.flash("error", "User already exists");
       return res.redirect('/register');
     }
 
-    // 3. Check if username is taken
-    let userNameExists = await userModel.findOne({ username });
-    if (userNameExists) {
-      req.flash("error", "Username already exists");
+    const usernameTaken = await userModel.findOne({ username });
+    if (usernameTaken) {
+      req.flash("error", "Username already taken");
       return res.redirect('/register');
     }
 
-    // 4. Hash password
-    let salt = await bcrypt.genSalt(10);
-    let hash = await bcrypt.hash(password, salt);
-
-    // 5. Create user
-    user = await userModel.create({
+    // Hash password and create user
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await userModel.create({
       username,
       name,
       email,
-      password: hash
+      password: hashedPassword
     });
 
-    // 6. Generate token
-    const token = generatetoken({ id: user._id, email: user.email });
-
-    // 7. Set cookie
+    // Generate token and set cookie
+    const token = generateToken({ id: user._id, email: user.email });
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true, // Use 'secure: process.env.NODE_ENV === "production"' in real apps
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      maxAge: 24 * 60 * 60 * 1000
     });
 
-    // 8. Redirect or send success
-    res.redirect('/profile'); // Or wherever you want to take the user after registration
+    req.flash("success", "Registration successful! Welcome!");
+    res.redirect('/profile');
 
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Something went wrong. Please try again.");
+    console.error("❌ Registration Error:", err.message);
+    req.flash("error", "Something went wrong. Please try again.");
+    return res.redirect('/register');
   }
 };
+
 
 module.exports.loginController = async function (req, res) {
   const { email, password } = req.body;
@@ -103,32 +102,32 @@ module.exports.logoutController= function(req,res){
     return res.redirect("/")
 }
 
-// module.exports.profileController= async function(req,res){
-  
-//   let byDate = Number(req.query.byDate);
-//   let { startDate, endDate } = req.query;
 
-//   byDate = byDate ? byDate : -1;
-//   startDate=startDate ? startDate : new Date("1970-01-01");
-//   endDate=endDate ? endDate : new Date();
 
-//     let user =  await userModel
-//    .findOne({email:req.user.email})
-//    .populate({
-//     path: "hisaab",
-//     match: {createdAt:{ $gte: startDate, $lte: endDate}},
-//     options: {sort: {createdAt: byDate}},
-//    });
-//     res.render("profile",{user}); 
-// }
+module.exports.profileController = async function(req, res, next) {
+    const id = req.user.id;
+    const startDate = req.query.startDate;
+    const endDate = req.query.endDate;
+    const order = req.query.byDate ? Number(req.query.byDate) : -1;
 
-module.exports.profileController=async function(req,res,next){
-    const id=req.user.id;
-    const user=await userModel.findOne({
-        _id:id
-    })
-    const hisaabs = await hisaabModel.find({
-        user:user._id
-    })
-    res.render("profile",{isLoggedIn:true,user,hisaabs})
-}
+    const user = await userModel.findById(id);
+
+    // Build the date filter only if startDate or endDate is present
+    const dateFilter = {};
+    if (startDate || endDate) {
+        dateFilter.createdAt = {
+            ...(startDate && { $gte: new Date(startDate) }),
+            ...(endDate && { $lt: new Date(endDate) })
+        };
+    }
+
+    // Full filter object
+    const filter = {
+        user: user._id,
+        ...dateFilter
+    };
+
+    const hisaab = await hisaabModel.find(filter).sort({ createdAt: order }).exec();
+
+    res.render("profile", { isLoggedIn: true, user, hisaab });
+};

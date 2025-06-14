@@ -51,7 +51,10 @@
     "escape-html": "^1.0.3",
     "etag": "^1.8.1",
     "express": "^4.21.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^7.5.0",
     "express-session": "^1.18.1",
+    "express-slow-down": "^2.1.0",
     "filelist": "^1.0.4",
     "finalhandler": "^1.2.0",
     "forwarded": "^0.2.0",
@@ -158,6 +161,7 @@
     "whatwg-url": "^13.0.0",
     "wide-align": "^1.1.5",
     "wrappy": "^1.0.2",
+    "xss-clean": "^0.1.4",
     "yallist": "^4.0.0"
   },
   "scripts": {

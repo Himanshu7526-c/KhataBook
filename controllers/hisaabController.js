@@ -6,7 +6,7 @@ let{title,description,encrypted,shareable,passcode,editpermissions}= req.body;
 encrypted = encrypted==='on'?true:false;
 shareable=shareable==='on'?true:false;
 editpermissions=editpermissions==='on'?true:false;
-// const passcode = req.body.passcode;
+
 try{
     let hisaabcreated = await hisaabModel.create({
         title,
