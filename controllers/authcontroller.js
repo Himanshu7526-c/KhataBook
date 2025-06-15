@@ -51,7 +51,7 @@ module.exports.registerController = async function (req, res) {
     const token = generateToken({ id: user._id, email: user.email });
     res.cookie("token", token, {
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000
+     maxAge: 20 * 60 * 1000,
     });
 
     req.flash("success", "Registration successful! Welcome!");
@@ -88,7 +88,7 @@ module.exports.loginController = async function (req, res) {
   const token = generatetoken({ id: user._id, email: user.email });
   res.cookie("token", token, {
     httpOnly: true,
-    maxAge: 30 * 24 * 60 * 60 * 1000,
+    maxAge: 20 * 60 * 1000 ,
   });
 
   res.redirect("/profile");
